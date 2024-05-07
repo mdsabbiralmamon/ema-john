@@ -25,3 +25,23 @@
     justify-content: space-between;
     align-items: center;
 }
+
+.pagination{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 50px;
+    gap: 18px;
+}
+
+.paginationBtn{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 50px;
+    gap: 18px;
+}
+
+.selected{
+    background-color: #FF9900;
+}

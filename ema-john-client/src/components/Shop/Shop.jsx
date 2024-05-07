@@ -1,102 +1,149 @@
-import React, { useEffect, useState } from 'react';
-import { addToDb, deleteShoppingCart, getShoppingCart } from '../../utilities/fakedb';
-import Cart from '../Cart/Cart';
-import Product from '../Product/Product';
-import './Shop.css';
-import { Link, useLoaderData } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import {
+  addToDb,
+  deleteShoppingCart,
+  getShoppingCart,
+} from "../../utilities/fakedb";
+import Cart from "../Cart/Cart";
+import Product from "../Product/Product";
+import "./Shop.css";
+import { Link, useLoaderData } from "react-router-dom";
 
 const Shop = () => {
-    const [products, setProducts] = useState([]);
-    const [cart, setCart] = useState([]);
-    const {count} = useLoaderData();
-    const numberOfPages = Math.ceil(count / 10);
-    // console.log(numberOfPages);
+  const [products, setProducts] = useState([]);
+  const [cart, setCart] = useState([]);
+  const { count } = useLoaderData();
+  const [nOfItemsPerPage, setNOfItemsPerPage] = useState(5);
+  const [currentPage, setCurrentPage] = useState(0);
+  const numberOfPages = Math.ceil(count / nOfItemsPerPage);
+  // console.log(numberOfPages);
 
-    const pages = [...Array(numberOfPages).keys()];
+  const pages = [...Array(numberOfPages).keys()];
 
-    console.log(pages);
+  console.log(pages);
 
+  const handleItemsPerPage = (e) => {
+    const items = parseInt(e.target.value);
+    setNOfItemsPerPage(items);
+    setCurrentPage(0);
+    console.log("items per page", items);
+  };
 
-    useEffect(() => {
-        fetch('http://localhost:5000/products')
-            .then(res => res.json())
-            .then(data => setProducts(data))
-    }, []);
+  const handlePrevButton = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
-    useEffect(() => {
-        const storedCart = getShoppingCart();
-        const savedCart = [];
-        // step 1: get id of the addedProduct
-        for (const id in storedCart) {
-            // step 2: get product from products state by using id
-            const addedProduct = products.find(product => product._id === id)
-            if (addedProduct) {
-                // step 3: add quantity
-                const quantity = storedCart[id];
-                addedProduct.quantity = quantity;
-                // step 4: add the added product to the saved cart
-                savedCart.push(addedProduct);
-            }
-            // console.log('added Product', addedProduct)
-        }
-        // step 5: set the cart
-        setCart(savedCart);
-    }, [products])
+  const handleNextButton = () => {
+    if(currentPage < pages.length-1){
+        setCurrentPage(currentPage + 1);
+    }
+  }
 
-    const handleAddToCart = (product) => {
-        // cart.push(product); '
-        let newCart = [];
-        // const newCart = [...cart, product];
-        // if product doesn't exist in the cart, then set quantity = 1
-        // if exist update quantity by 1
-        const exists = cart.find(pd => pd._id === product._id);
-        if (!exists) {
-            product.quantity = 1;
-            newCart = [...cart, product]
-        }
-        else {
-            exists.quantity = exists.quantity + 1;
-            const remaining = cart.filter(pd => pd._id !== product._id);
-            newCart = [...remaining, exists];
-        }
+  useEffect(() => {
+    fetch("http://localhost:5000/products")
+      .then((res) => res.json())
+      .then((data) => setProducts(data));
+  }, []);
 
-        setCart(newCart);
-        addToDb(product._id)
+  useEffect(() => {
+    const storedCart = getShoppingCart();
+    const savedCart = [];
+    // step 1: get id of the addedProduct
+    for (const id in storedCart) {
+      // step 2: get product from products state by using id
+      const addedProduct = products.find((product) => product._id === id);
+      if (addedProduct) {
+        // step 3: add quantity
+        const quantity = storedCart[id];
+        addedProduct.quantity = quantity;
+        // step 4: add the added product to the saved cart
+        savedCart.push(addedProduct);
+      }
+      // console.log('added Product', addedProduct)
+    }
+    // step 5: set the cart
+    setCart(savedCart);
+  }, [products]);
+
+  const handleAddToCart = (product) => {
+    // cart.push(product); '
+    let newCart = [];
+    // const newCart = [...cart, product];
+    // if product doesn't exist in the cart, then set quantity = 1
+    // if exist update quantity by 1
+    const exists = cart.find((pd) => pd._id === product._id);
+    if (!exists) {
+      product.quantity = 1;
+      newCart = [...cart, product];
+    } else {
+      exists.quantity = exists.quantity + 1;
+      const remaining = cart.filter((pd) => pd._id !== product._id);
+      newCart = [...remaining, exists];
     }
 
-    const handleClearCart = () => {
-        setCart([]);
-        deleteShoppingCart();
-    }
+    setCart(newCart);
+    addToDb(product._id);
+  };
 
-    return (
-        <div className='shop-container'>
-            <div className="products-container">
-                {
-                    products.map(product => <Product
-                        key={product._id}
-                        product={product}
-                        handleAddToCart={handleAddToCart}
-                    ></Product>)
-                }
-            </div>
-            <div className="cart-container">
-                <Cart
-                    cart={cart}
-                    handleClearCart={handleClearCart}
-                >
-                    <Link className='proceed-link' to="/orders">
-                        <button className='btn-proceed'>Review Order</button>
-                    </Link>
-                </Cart>
-            </div>
-            <div>
-                {
-                    pages.map(page => <button key={page}>{page}</button>)
-                }
-            </div>
+  const handleClearCart = () => {
+    setCart([]);
+    deleteShoppingCart();
+  };
+
+  return (
+    <div className="shop-container">
+      <div className="products-container">
+        {products.map((product) => (
+          <Product
+            key={product._id}
+            product={product}
+            handleAddToCart={handleAddToCart}
+          ></Product>
+        ))}
+      </div>
+      <div className="cart-container">
+        <Cart cart={cart} handleClearCart={handleClearCart}>
+          <Link className="proceed-link" to="/orders">
+            <button className="btn-proceed">Review Order</button>
+          </Link>
+        </Cart>
+      </div>
+      <div className="pagination">
+        <div>
+          <button onClick={handlePrevButton}>Prev</button>
         </div>
-    );
+        <div className="paginationBtn">
+          {pages.map((page) => (
+            <button
+              className={currentPage === page ? "selected" : ""}
+              onClick={() => setCurrentPage(page)}
+              key={page}
+            >
+              {page + 1}
+            </button>
+          ))}
+        </div>
+        <div>
+          <button onClick={handleNextButton}>Next</button>
+        </div>
+        <select
+          value={nOfItemsPerPage}
+          onChange={handleItemsPerPage}
+          name=""
+          id=""
+        >
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="40">40</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+    </div>
+  );
 };
 
 export default Shop;
